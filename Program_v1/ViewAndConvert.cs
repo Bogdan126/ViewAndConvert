@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using WfdbCsharpWrapper;
+using HDF5DotNet;
 
 namespace Program_v1
 {
@@ -36,7 +37,6 @@ namespace Program_v1
 		
 		private void UsingPInvoke()
 		{
-			Console.WriteLine("exgetvec Using PInvoke");
 
 			int i, j, nsig;
 			Sample[] v;
@@ -64,32 +64,46 @@ namespace Program_v1
 
 		private void OpenButton_Click(object sender, EventArgs e)
 		{
-			
-			int min = 0, max = 0;
-			int[] table = new int[649800];
-			int[] table2 = new int[649800];
 
-			if (openFileDialog1.ShowDialog() == DialogResult.OK)
+			// MIT-BIH
+			if (GlobalValues.database == 1)
 			{
-				System.IO.StreamReader sr = new System.IO.StreamReader(openFileDialog1.FileName);
-				
-				pathName = System.IO.Path.GetFullPath(openFileDialog1.FileName);
-				pathName2 = System.IO.Path.GetFullPath(System.IO.Path.ChangeExtension(openFileDialog1.FileName, ".hea"));
-				fileName2 = System.IO.Path.GetFileName(System.IO.Path.ChangeExtension(openFileDialog1.FileName, ".hea"));
-				fileName = System.IO.Path.GetFileName(openFileDialog1.FileName);
-				fileName3 = System.IO.Path.GetFileNameWithoutExtension(openFileDialog1.FileName);
+				int min = 0, max = 0;
+				int[] table = new int[649800];
+				int[] table2 = new int[649800];
 
-				sr.Close();
+				if (openFileDialog1.ShowDialog() == DialogResult.OK)
+				{
+					System.IO.StreamReader sr = new System.IO.StreamReader(openFileDialog1.FileName);
 
-				System.IO.File.Copy(pathName2, curpath + "/data/" + fileName2, true);
-				System.IO.File.Copy(pathName, curpath + "/data/" + fileName, true);
+					pathName = System.IO.Path.GetFullPath(openFileDialog1.FileName);
+					pathName2 = System.IO.Path.GetFullPath(System.IO.Path.ChangeExtension(openFileDialog1.FileName, ".hea"));
+					fileName2 = System.IO.Path.GetFileName(System.IO.Path.ChangeExtension(openFileDialog1.FileName, ".hea"));
+					fileName = System.IO.Path.GetFileName(openFileDialog1.FileName);
+					fileName3 = System.IO.Path.GetFileNameWithoutExtension(openFileDialog1.FileName);
+
+					sr.Close();
+
+					System.IO.File.Copy(pathName2, curpath + "/data/" + fileName2, true);
+					System.IO.File.Copy(pathName, curpath + "/data/" + fileName, true);
+				}
+
+				table = UsingWrapperClasses1();
+				table2 = UsingWrapperClasses2();
+
+				ChartLoad(min, max, table);
+				ChartLoad2(min, max, table2);
 			}
-			
-			table = UsingWrapperClasses1();
-			table2 = UsingWrapperClasses2();
 
-			ChartLoad(min, max, table);
-			ChartLoad2(min, max, table2);
+			if(GlobalValues.database == 2)
+			{
+
+			}
+
+			ConvertHDF5Button.Enabled = true;
+			ConvertXDFButton.Enabled = true;
+			ConvertTXTButton.Enabled = true;
+
 		}
 
 		private void pomocToolStripMenuItem_Click(object sender, EventArgs e)
@@ -110,19 +124,9 @@ namespace Program_v1
 
 
 
-
-
-
-
-
-
-
-
-
 		// ////////////////////////// CHART1 - EKG FOR MIT-BIH /////////////////////////////
 		private int[] UsingWrapperClasses1()
 		{
-			int min = 0, max = 0;
 
 			using (var record = new Record(fileName3))
 			{
@@ -255,8 +259,6 @@ namespace Program_v1
 
 		private int[] UsingWrapperClasses2()
 		{
-			int min = 0, max = 0;
-
 			using (var record = new Record(fileName3))
 			{
 				int[] voltage_tab2 = new int[649800];
@@ -322,7 +324,7 @@ namespace Program_v1
 
 			chart2.Series.Add("???");
 			chart2.Series["???"].ChartType = SeriesChartType.Line;
-			chart2.Series["???"].Color = Color.Blue;
+			chart2.Series["???"].Color = Color.Red;
 
 			
 
@@ -378,15 +380,151 @@ namespace Program_v1
 			}
 			catch { }
 		}
+
+		
+
+		private void PickDatabase_Click(object sender, EventArgs e)
+		{
+			BazaDanych b = new BazaDanych();
+			b.ShowDialog();
+			PickTimeButton.Enabled = true;
+		}
+
+
+
+
+
+
+		
+
+
+		// ///////// CONVERT TO HDF5 ////////////////
+
+
+		static int Function(H5GroupId id, string objectName, Object param)
+		{
+			Console.WriteLine("Nazwa obiektu: {0}", objectName);
+			Console.WriteLine("Parametr obiektu: {0}", param);
+			return 0;
+		}
+		
+		private void ConvertToHDF5(int[] table, int[] table2)
+		{
+			try
+			{
+
+				// Zapisywanie i odczytanie tablicy typu double
+				int DATA_ARRAY_LENGTH = Convert.ToInt32(GlobalValues.timeEnd) - Convert.ToInt32(GlobalValues.timeBegin);
+				
+				// RANK- liczba wymiarów tablicy
+				const int RANK = 2;
+
+				// Utworzenie pliku HDF5
+				H5FileId fileId = H5F.create("SignalTest.h5",
+											 H5F.CreateMode.ACC_TRUNC);
+
+				// Utworzenie grupy HDF5.
+				H5GroupId groupId = H5G.create(fileId, "/cSharpGroup");
+				H5GroupId subGroup = H5G.create(groupId, "mySubGroup");
+
+				// Pobieranie informacje o obiekcie
+				ObjectInfo info = H5G.getObjectInfo(fileId, "/cSharpGroup", true);
+				Console.WriteLine("cSharpGroup header size is {0}",
+					info.headerSize);
+				Console.WriteLine("cSharpGroup nlinks is {0}", info.nHardLinks);
+				Console.WriteLine("cSharpGroup fileno is {0} {1}",
+					 info.fileNumber[0], info.fileNumber[1]);
+				Console.WriteLine("cSharpGroup objno is {0} {1}",
+					 info.objectNumber[0], info.objectNumber[1]);
+				Console.WriteLine("cSharpGroup type is {0}", info.objectType);
+
+
+				H5G.close(subGroup);
+
+				// Przygotowanie miejsca w pamięci na zapis 
+				// dwuwymiarowej tablicy
+				long[] dims = new long[RANK];
+
+				dims[0] = RANK;
+				dims[1] = DATA_ARRAY_LENGTH;
+
+				int j = 0;
+				// Wpisanie danych w postaci kolejnych liczb
+				float[,] dset_data = new float[2,DATA_ARRAY_LENGTH];
+				for (int i = Convert.ToInt32(GlobalValues.timeBegin); i < Convert.ToInt32(GlobalValues.timeEnd); i++)
+				{
+					dset_data[0,j] = table[i];
+					dset_data[1,j] = table2[i];
+					j++;
+				}
+
+				j = 0;
+
+				// Utworzenie przestrzeni danych do umieszczenia tam tablicy
+				// H5DataSpaceId posłuży do stworzenia przestrzeni danych
+				H5DataSpaceId spaceId = H5S.create_simple(RANK,dims);
+
+				// Utworzenie kopii standardowego typu danych.
+				// H5DataTypeId jest później używany do stworzenia zbioru danych
+				H5DataTypeId typeId = H5T.copy(H5T.H5Type.NATIVE_FLOAT);
+
+				// Rozmiar typu danych
+				int typeSize = H5T.getSize(typeId);
+
+				// Ustawienie porządku danych na "big endian"
+				H5T.setOrder(typeId, H5T.Order.BE);
+
+				// Ustawienie porządku danych na "little endian"
+				H5T.setOrder(typeId, H5T.Order.LE);
+
+				// Stworzenie zbioru danych
+				H5DataSetId dataSetId = H5D.create(fileId, "/csharpExample",
+												   typeId, spaceId);
+
+				// Zapis danych do zbioru danych
+				H5D.write(dataSetId, new H5DataTypeId(H5T.H5Type.NATIVE_FLOAT),
+								  new H5Array<float>(dset_data));
+
+				// Zamknięcie wszystkich otwartych zasobów
+				H5D.close(dataSetId);
+				H5S.close(spaceId);
+				H5T.close(typeId);
+				H5G.close(groupId);
+
+				//int x = 10;
+				//H5T.enumInsert<int>(typeId, "myString", ref x);
+				//H5G.close(groupId);
+
+				H5GIterateCallback myDelegate;
+				myDelegate = Function;
+				int x = 9;
+				int r = 0;
+				int index = H5G.iterate(fileId, "/cSharpGroup",
+					myDelegate, x, ref r);
+
+				H5F.close(fileId);
+			}
+
+			// Catch łapie wszystkie wyjątki klas HDF. Można wyodrębnić 
+			// poszczególne wyjątki, np. catch (H5FopenException openException).
+			catch (HDFException ex)
+			{
+				Console.WriteLine(ex.Message);
+			}
+		}
+
+		private void ConvertHDF5Button_Click(object sender, EventArgs e)
+		{
+			ConvertToHDF5(UsingWrapperClasses1(),UsingWrapperClasses2());
+		}
 	}
 
 	public static class GlobalValues
 	{
 		public static double timeBegin = 0;
 		public static double timeEnd = 649800;
+		public static int database = 0;
 	}
 
 
 }
-
-

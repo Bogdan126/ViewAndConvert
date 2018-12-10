@@ -39,13 +39,16 @@
 			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
 			this.pomocToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.panel1 = new System.Windows.Forms.Panel();
+			this.PickDatabase = new System.Windows.Forms.Button();
 			this.panel2 = new System.Windows.Forms.Panel();
-			this.SaveButton = new System.Windows.Forms.Button();
+			this.OpenButton = new System.Windows.Forms.Button();
 			this.PickTimeButton = new System.Windows.Forms.Button();
 			this.CloseButton = new System.Windows.Forms.Button();
-			this.OpenButton = new System.Windows.Forms.Button();
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
 			this.chart2 = new System.Windows.Forms.DataVisualization.Charting.Chart();
+			this.ConvertHDF5Button = new System.Windows.Forms.Button();
+			this.ConvertXDFButton = new System.Windows.Forms.Button();
+			this.ConvertTXTButton = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.chart1)).BeginInit();
 			this.menuStrip1.SuspendLayout();
 			this.panel1.SuspendLayout();
@@ -93,39 +96,56 @@
 			// 
 			this.panel1.BackColor = System.Drawing.SystemColors.GradientActiveCaption;
 			this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+			this.panel1.Controls.Add(this.PickDatabase);
 			this.panel1.Controls.Add(this.panel2);
+			this.panel1.Controls.Add(this.PickTimeButton);
 			this.panel1.Controls.Add(this.CloseButton);
-			this.panel1.Controls.Add(this.OpenButton);
 			this.panel1.Location = new System.Drawing.Point(0, 27);
 			this.panel1.Name = "panel1";
 			this.panel1.Size = new System.Drawing.Size(224, 661);
 			this.panel1.TabIndex = 2;
 			// 
+			// PickDatabase
+			// 
+			this.PickDatabase.BackColor = System.Drawing.SystemColors.ControlLight;
+			this.PickDatabase.Location = new System.Drawing.Point(9, 3);
+			this.PickDatabase.Name = "PickDatabase";
+			this.PickDatabase.Size = new System.Drawing.Size(203, 38);
+			this.PickDatabase.TabIndex = 5;
+			this.PickDatabase.Text = "Wybierz bazę danych";
+			this.PickDatabase.UseVisualStyleBackColor = false;
+			this.PickDatabase.Click += new System.EventHandler(this.PickDatabase_Click);
+			// 
 			// panel2
 			// 
 			this.panel2.BackColor = System.Drawing.SystemColors.ActiveCaption;
 			this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-			this.panel2.Controls.Add(this.SaveButton);
-			this.panel2.Controls.Add(this.PickTimeButton);
-			this.panel2.Location = new System.Drawing.Point(4, 48);
+			this.panel2.Controls.Add(this.ConvertTXTButton);
+			this.panel2.Controls.Add(this.ConvertXDFButton);
+			this.panel2.Controls.Add(this.ConvertHDF5Button);
+			this.panel2.Controls.Add(this.OpenButton);
+			this.panel2.Location = new System.Drawing.Point(4, 89);
 			this.panel2.Name = "panel2";
-			this.panel2.Size = new System.Drawing.Size(213, 562);
+			this.panel2.Size = new System.Drawing.Size(213, 521);
 			this.panel2.TabIndex = 2;
 			// 
-			// SaveButton
+			// OpenButton
 			// 
-			this.SaveButton.BackColor = System.Drawing.SystemColors.ControlLight;
-			this.SaveButton.Location = new System.Drawing.Point(3, 517);
-			this.SaveButton.Name = "SaveButton";
-			this.SaveButton.Size = new System.Drawing.Size(203, 38);
-			this.SaveButton.TabIndex = 4;
-			this.SaveButton.Text = "Zapisz jako...";
-			this.SaveButton.UseVisualStyleBackColor = false;
+			this.OpenButton.BackColor = System.Drawing.SystemColors.ControlLight;
+			this.OpenButton.Enabled = false;
+			this.OpenButton.Location = new System.Drawing.Point(3, 3);
+			this.OpenButton.Name = "OpenButton";
+			this.OpenButton.Size = new System.Drawing.Size(203, 38);
+			this.OpenButton.TabIndex = 0;
+			this.OpenButton.Text = "Otwórz plik";
+			this.OpenButton.UseVisualStyleBackColor = false;
+			this.OpenButton.Click += new System.EventHandler(this.OpenButton_Click);
 			// 
 			// PickTimeButton
 			// 
 			this.PickTimeButton.BackColor = System.Drawing.SystemColors.ControlLight;
-			this.PickTimeButton.Location = new System.Drawing.Point(3, 3);
+			this.PickTimeButton.Enabled = false;
+			this.PickTimeButton.Location = new System.Drawing.Point(9, 45);
 			this.PickTimeButton.Name = "PickTimeButton";
 			this.PickTimeButton.Size = new System.Drawing.Size(203, 38);
 			this.PickTimeButton.TabIndex = 3;
@@ -142,18 +162,6 @@
 			this.CloseButton.TabIndex = 1;
 			this.CloseButton.Text = "Zamknij plik";
 			this.CloseButton.UseVisualStyleBackColor = false;
-			// 
-			// OpenButton
-			// 
-			this.OpenButton.BackColor = System.Drawing.SystemColors.ControlLight;
-			this.OpenButton.Enabled = false;
-			this.OpenButton.Location = new System.Drawing.Point(3, 3);
-			this.OpenButton.Name = "OpenButton";
-			this.OpenButton.Size = new System.Drawing.Size(214, 38);
-			this.OpenButton.TabIndex = 0;
-			this.OpenButton.Text = "Otwórz plik";
-			this.OpenButton.UseVisualStyleBackColor = false;
-			this.OpenButton.Click += new System.EventHandler(this.OpenButton_Click);
 			// 
 			// openFileDialog1
 			// 
@@ -177,6 +185,40 @@
 			this.chart2.Size = new System.Drawing.Size(1054, 320);
 			this.chart2.TabIndex = 3;
 			this.chart2.Text = "chart2";
+			// 
+			// ConvertHDF5Button
+			// 
+			this.ConvertHDF5Button.BackColor = System.Drawing.SystemColors.ControlLight;
+			this.ConvertHDF5Button.Enabled = false;
+			this.ConvertHDF5Button.Location = new System.Drawing.Point(3, 47);
+			this.ConvertHDF5Button.Name = "ConvertHDF5Button";
+			this.ConvertHDF5Button.Size = new System.Drawing.Size(203, 38);
+			this.ConvertHDF5Button.TabIndex = 5;
+			this.ConvertHDF5Button.Text = "Konwertuj do HDF5";
+			this.ConvertHDF5Button.UseVisualStyleBackColor = false;
+			this.ConvertHDF5Button.Click += new System.EventHandler(this.ConvertHDF5Button_Click);
+			// 
+			// ConvertXDFButton
+			// 
+			this.ConvertXDFButton.BackColor = System.Drawing.SystemColors.ControlLight;
+			this.ConvertXDFButton.Enabled = false;
+			this.ConvertXDFButton.Location = new System.Drawing.Point(3, 91);
+			this.ConvertXDFButton.Name = "ConvertXDFButton";
+			this.ConvertXDFButton.Size = new System.Drawing.Size(203, 38);
+			this.ConvertXDFButton.TabIndex = 6;
+			this.ConvertXDFButton.Text = "Konwertuj do XDF";
+			this.ConvertXDFButton.UseVisualStyleBackColor = false;
+			// 
+			// ConvertTXTButton
+			// 
+			this.ConvertTXTButton.BackColor = System.Drawing.SystemColors.ControlLight;
+			this.ConvertTXTButton.Enabled = false;
+			this.ConvertTXTButton.Location = new System.Drawing.Point(3, 135);
+			this.ConvertTXTButton.Name = "ConvertTXTButton";
+			this.ConvertTXTButton.Size = new System.Drawing.Size(203, 38);
+			this.ConvertTXTButton.TabIndex = 7;
+			this.ConvertTXTButton.Text = "Konwertuj do TXT";
+			this.ConvertTXTButton.UseVisualStyleBackColor = false;
 			// 
 			// ViewAndConvert
 			// 
@@ -212,9 +254,12 @@
 		private System.Windows.Forms.Button PickTimeButton;
 		private System.Windows.Forms.Button CloseButton;
 		private System.Windows.Forms.Button OpenButton;
-		private System.Windows.Forms.Button SaveButton;
 		private System.Windows.Forms.OpenFileDialog openFileDialog1;
 		private System.Windows.Forms.DataVisualization.Charting.Chart chart2;
+		private System.Windows.Forms.Button PickDatabase;
+		private System.Windows.Forms.Button ConvertHDF5Button;
+		private System.Windows.Forms.Button ConvertXDFButton;
+		private System.Windows.Forms.Button ConvertTXTButton;
 	}
 }
 
