@@ -1,9 +1,12 @@
 ﻿using System;
+using System.IO;
+using System.Text;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using WfdbCsharpWrapper;
 using HDF5DotNet;
+using System.Globalization;
 
 namespace Program_v1
 {
@@ -18,9 +21,9 @@ namespace Program_v1
 		private String fileName3 = "";
 		private String pathName = "";
 		private String pathName2 = "";
-		private static int pathlen = System.IO.Directory.GetCurrentDirectory().Length;
+		private static int pathlen = Directory.GetCurrentDirectory().Length;
 
-		private static String curpath = System.IO.Directory.GetCurrentDirectory().Remove(pathlen - 10);
+		private static String curpath = Directory.GetCurrentDirectory().Remove(pathlen - 10);
 
 		public ViewAndConvert()
 		{
@@ -65,7 +68,6 @@ namespace Program_v1
 		private void OpenButton_Click(object sender, EventArgs e)
 		{
 
-			// MIT-BIH
 			if (GlobalValues.database == 1)
 			{
 				int min = 0, max = 0;
@@ -74,18 +76,18 @@ namespace Program_v1
 
 				if (openFileDialog1.ShowDialog() == DialogResult.OK)
 				{
-					System.IO.StreamReader sr = new System.IO.StreamReader(openFileDialog1.FileName);
+					StreamReader sr = new StreamReader(openFileDialog1.FileName);
 
-					pathName = System.IO.Path.GetFullPath(openFileDialog1.FileName);
-					pathName2 = System.IO.Path.GetFullPath(System.IO.Path.ChangeExtension(openFileDialog1.FileName, ".hea"));
-					fileName2 = System.IO.Path.GetFileName(System.IO.Path.ChangeExtension(openFileDialog1.FileName, ".hea"));
-					fileName = System.IO.Path.GetFileName(openFileDialog1.FileName);
-					fileName3 = System.IO.Path.GetFileNameWithoutExtension(openFileDialog1.FileName);
+					pathName = Path.GetFullPath(openFileDialog1.FileName);
+					pathName2 = Path.GetFullPath(Path.ChangeExtension(openFileDialog1.FileName, ".hea"));
+					fileName2 = Path.GetFileName(Path.ChangeExtension(openFileDialog1.FileName, ".hea"));
+					fileName = Path.GetFileName(openFileDialog1.FileName);
+					fileName3 = Path.GetFileNameWithoutExtension(openFileDialog1.FileName);
 
 					sr.Close();
 
-					System.IO.File.Copy(pathName2, curpath + "/data/" + fileName2, true);
-					System.IO.File.Copy(pathName, curpath + "/data/" + fileName, true);
+					File.Copy(pathName2, curpath + "/data/" + fileName2, true);
+					File.Copy(pathName, curpath + "/data/" + fileName, true);
 				}
 
 				table = UsingWrapperClasses1();
@@ -191,13 +193,13 @@ namespace Program_v1
 
 			chart1.Series[0].IsVisibleInLegend = false;
 
-			chart1.Series.Add("EKG");
-			chart1.Series["EKG"].ChartType = SeriesChartType.Line;
-			chart1.Series["EKG"].Color = Color.Blue;
+			chart1.Series.Add("V5");
+			chart1.Series["V5"].ChartType = SeriesChartType.Line;
+			chart1.Series["V5"].Color = Color.Blue;
 
 			for (int i = 0; i < GlobalValues.timeEnd - GlobalValues.timeBegin; i++)
 			{
-				chart1.Series["EKG"].Points.AddXY(i, table[i]);
+				chart1.Series["V5"].Points.AddXY(i, table[i]);
 			}
 		}
 
@@ -255,7 +257,7 @@ namespace Program_v1
 
 
 
-		// ////////////////// CHART 2 - ????? FOR MIT-BIH /////////////////////
+		// ////////////////// CHART 2 FOR MIT-BIH /////////////////////
 
 		private int[] UsingWrapperClasses2()
 		{
@@ -322,15 +324,15 @@ namespace Program_v1
 
 			chart2.Series[0].IsVisibleInLegend = false;
 
-			chart2.Series.Add("???");
-			chart2.Series["???"].ChartType = SeriesChartType.Line;
-			chart2.Series["???"].Color = Color.Red;
+			chart2.Series.Add("V2");
+			chart2.Series["V2"].ChartType = SeriesChartType.Line;
+			chart2.Series["V2"].Color = Color.Red;
 
 			
 
 			for (int i = 0; i < GlobalValues.timeEnd - GlobalValues.timeBegin; i++)
 			{
-				chart2.Series["???"].Points.AddXY(i, table[i]);
+				chart2.Series["V2"].Points.AddXY(i, table[i]);
 			}
 		}
 
@@ -398,7 +400,7 @@ namespace Program_v1
 		
 
 
-		// ///////// CONVERT TO HDF5 ////////////////
+		// ///////// CONVERT TO HDF5 MIT-BIH ////////////////
 
 
 		static int Function(H5GroupId id, string objectName, Object param)
@@ -408,7 +410,7 @@ namespace Program_v1
 			return 0;
 		}
 		
-		private void ConvertToHDF5(int[] table, int[] table2)
+		public void ConvertToHDF5(int[] table, int[] table2)
 		{
 			try
 			{
@@ -423,34 +425,42 @@ namespace Program_v1
 				H5FileId fileId = H5F.create("SignalTest.h5",
 											 H5F.CreateMode.ACC_TRUNC);
 
+
+				// ATTRIBUTES //
+				long[] dimsatr = new long[1];
+				float[] attribute = new float[1];
+				dimsatr[0] = 1;
+				attribute[0] = 360;
+				H5DataTypeId typeIdatr = H5T.copy(H5T.H5Type.NATIVE_FLOAT);
+				H5DataSpaceId spaceIdatr = H5S.create_simple(1, dimsatr);
+				H5AttributeId attr = H5A.create(fileId, "Fs", typeIdatr,spaceIdatr);
+				H5A.write(attr, new H5DataTypeId(H5T.H5Type.NATIVE_FLOAT), new H5Array<float>(attribute));
+				
+
+
 				// Utworzenie grupy HDF5.
 				H5GroupId groupId = H5G.create(fileId, "/cSharpGroup");
 				H5GroupId subGroup = H5G.create(groupId, "mySubGroup");
 
 				// Pobieranie informacje o obiekcie
 				ObjectInfo info = H5G.getObjectInfo(fileId, "/cSharpGroup", true);
-				Console.WriteLine("cSharpGroup header size is {0}",
-					info.headerSize);
-				Console.WriteLine("cSharpGroup nlinks is {0}", info.nHardLinks);
-				Console.WriteLine("cSharpGroup fileno is {0} {1}",
-					 info.fileNumber[0], info.fileNumber[1]);
-				Console.WriteLine("cSharpGroup objno is {0} {1}",
-					 info.objectNumber[0], info.objectNumber[1]);
-				Console.WriteLine("cSharpGroup type is {0}", info.objectType);
-
+				
 
 				H5G.close(subGroup);
 
+
+				// ///////// DATA /////////
+
 				// Przygotowanie miejsca w pamięci na zapis 
-				// dwuwymiarowej tablicy
+				// dwuwymiarowej tablicy z danymi
 				long[] dims = new long[RANK];
 
 				dims[0] = RANK;
 				dims[1] = DATA_ARRAY_LENGTH;
 
-				int j = 0;
 				// Wpisanie danych w postaci kolejnych liczb
 				float[,] dset_data = new float[2,DATA_ARRAY_LENGTH];
+				int j = 0;
 				for (int i = Convert.ToInt32(GlobalValues.timeBegin); i < Convert.ToInt32(GlobalValues.timeEnd); i++)
 				{
 					dset_data[0,j] = table[i];
@@ -471,25 +481,31 @@ namespace Program_v1
 				// Rozmiar typu danych
 				int typeSize = H5T.getSize(typeId);
 
-				// Ustawienie porządku danych na "big endian"
-				H5T.setOrder(typeId, H5T.Order.BE);
-
 				// Ustawienie porządku danych na "little endian"
 				H5T.setOrder(typeId, H5T.Order.LE);
 
 				// Stworzenie zbioru danych
-				H5DataSetId dataSetId = H5D.create(fileId, "/csharpExample",
-												   typeId, spaceId);
+				H5DataSetId dataSetId = H5D.create(fileId, "/Data", typeId, spaceId);
 
 				// Zapis danych do zbioru danych
-				H5D.write(dataSetId, new H5DataTypeId(H5T.H5Type.NATIVE_FLOAT),
-								  new H5Array<float>(dset_data));
+				H5D.write(dataSetId, new H5DataTypeId(H5T.H5Type.NATIVE_FLOAT), new H5Array<float>(dset_data));
 
 				// Zamknięcie wszystkich otwartych zasobów
+				H5A.close(attr);
 				H5D.close(dataSetId);
 				H5S.close(spaceId);
 				H5T.close(typeId);
 				H5G.close(groupId);
+
+
+				// //////// INFO ////////
+
+				long[] dims_info = new long[RANK];
+
+				dims_info[0] = RANK;
+				dims_info[1] = 3;
+
+
 
 				//int x = 10;
 				//H5T.enumInsert<int>(typeId, "myString", ref x);
@@ -517,6 +533,52 @@ namespace Program_v1
 		{
 			ConvertToHDF5(UsingWrapperClasses1(),UsingWrapperClasses2());
 		}
+
+
+
+
+		// //////// CONVERT TO XDF - MIT-BIH /////////
+
+
+		public void ConvertToXDF(int[] table, int[] table2)
+		{
+
+
+			int DATA_ARRAY_LENGTH = Convert.ToInt32(GlobalValues.timeEnd) - Convert.ToInt32(GlobalValues.timeBegin);
+			double[,] signaltable = new double[2, DATA_ARRAY_LENGTH];
+
+			int j = 0;
+			double p = 0;
+			for (int i = Convert.ToInt32(GlobalValues.timeBegin); i < Convert.ToInt32(GlobalValues.timeEnd); i++)
+			{
+				signaltable[0, j] = table[i];
+				signaltable[1, j] = table2[i];
+				j++;
+			}
+
+			StringBuilder s = new StringBuilder();
+			j = 0;
+
+			s.AppendFormat("{0},{1},{2}", "'Elapsed time'", "'V5'","'V2'");
+			s.AppendLine();
+			s.AppendFormat("{0},{1},{2}", "'mm:ss.mmm'", "'uV'", "'uV'");
+			s.AppendLine();
+			for (int i = Convert.ToInt32(GlobalValues.timeBegin); i < Convert.ToInt32(GlobalValues.timeEnd); i++)
+			{
+				if (j != 0)
+					p = Convert.ToDouble(j) / 360;
+				else p = 0;
+				s.AppendFormat("{0},{1},{2}","'0:"+p.ToString("00.000", CultureInfo.GetCultureInfo("en-US")) +"'",signaltable[0, j].ToString(), signaltable[1, j].ToString());
+				s.AppendLine();
+				j++;
+			}
+			File.WriteAllText(Directory.GetCurrentDirectory() + "/TestSignals.csv", s.ToString());
+		}
+
+		private void ConvertXDFButton_Click(object sender, EventArgs e)
+		{
+			ConvertToXDF(UsingWrapperClasses1(), UsingWrapperClasses2());
+		}
 	}
 
 	public static class GlobalValues
@@ -525,6 +587,4 @@ namespace Program_v1
 		public static double timeEnd = 649800;
 		public static int database = 0;
 	}
-
-
 }

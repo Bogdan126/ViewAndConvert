@@ -41,14 +41,14 @@
 			this.panel1 = new System.Windows.Forms.Panel();
 			this.PickDatabase = new System.Windows.Forms.Button();
 			this.panel2 = new System.Windows.Forms.Panel();
+			this.ConvertTXTButton = new System.Windows.Forms.Button();
+			this.ConvertXDFButton = new System.Windows.Forms.Button();
+			this.ConvertHDF5Button = new System.Windows.Forms.Button();
 			this.OpenButton = new System.Windows.Forms.Button();
 			this.PickTimeButton = new System.Windows.Forms.Button();
 			this.CloseButton = new System.Windows.Forms.Button();
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
 			this.chart2 = new System.Windows.Forms.DataVisualization.Charting.Chart();
-			this.ConvertHDF5Button = new System.Windows.Forms.Button();
-			this.ConvertXDFButton = new System.Windows.Forms.Button();
-			this.ConvertTXTButton = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.chart1)).BeginInit();
 			this.menuStrip1.SuspendLayout();
 			this.panel1.SuspendLayout();
@@ -129,6 +129,41 @@
 			this.panel2.Size = new System.Drawing.Size(213, 521);
 			this.panel2.TabIndex = 2;
 			// 
+			// ConvertTXTButton
+			// 
+			this.ConvertTXTButton.BackColor = System.Drawing.SystemColors.ControlLight;
+			this.ConvertTXTButton.Enabled = false;
+			this.ConvertTXTButton.Location = new System.Drawing.Point(3, 135);
+			this.ConvertTXTButton.Name = "ConvertTXTButton";
+			this.ConvertTXTButton.Size = new System.Drawing.Size(203, 38);
+			this.ConvertTXTButton.TabIndex = 7;
+			this.ConvertTXTButton.Text = "Konwertuj do TXT";
+			this.ConvertTXTButton.UseVisualStyleBackColor = false;
+			// 
+			// ConvertXDFButton
+			// 
+			this.ConvertXDFButton.BackColor = System.Drawing.SystemColors.ControlLight;
+			this.ConvertXDFButton.Enabled = false;
+			this.ConvertXDFButton.Location = new System.Drawing.Point(3, 91);
+			this.ConvertXDFButton.Name = "ConvertXDFButton";
+			this.ConvertXDFButton.Size = new System.Drawing.Size(203, 38);
+			this.ConvertXDFButton.TabIndex = 6;
+			this.ConvertXDFButton.Text = "Konwertuj do XDF";
+			this.ConvertXDFButton.UseVisualStyleBackColor = false;
+			this.ConvertXDFButton.Click += new System.EventHandler(this.ConvertXDFButton_Click);
+			// 
+			// ConvertHDF5Button
+			// 
+			this.ConvertHDF5Button.BackColor = System.Drawing.SystemColors.ControlLight;
+			this.ConvertHDF5Button.Enabled = false;
+			this.ConvertHDF5Button.Location = new System.Drawing.Point(3, 47);
+			this.ConvertHDF5Button.Name = "ConvertHDF5Button";
+			this.ConvertHDF5Button.Size = new System.Drawing.Size(203, 38);
+			this.ConvertHDF5Button.TabIndex = 5;
+			this.ConvertHDF5Button.Text = "Konwertuj do HDF5";
+			this.ConvertHDF5Button.UseVisualStyleBackColor = false;
+			this.ConvertHDF5Button.Click += new System.EventHandler(this.ConvertHDF5Button_Click);
+			// 
 			// OpenButton
 			// 
 			this.OpenButton.BackColor = System.Drawing.SystemColors.ControlLight;
@@ -185,40 +220,6 @@
 			this.chart2.Size = new System.Drawing.Size(1054, 320);
 			this.chart2.TabIndex = 3;
 			this.chart2.Text = "chart2";
-			// 
-			// ConvertHDF5Button
-			// 
-			this.ConvertHDF5Button.BackColor = System.Drawing.SystemColors.ControlLight;
-			this.ConvertHDF5Button.Enabled = false;
-			this.ConvertHDF5Button.Location = new System.Drawing.Point(3, 47);
-			this.ConvertHDF5Button.Name = "ConvertHDF5Button";
-			this.ConvertHDF5Button.Size = new System.Drawing.Size(203, 38);
-			this.ConvertHDF5Button.TabIndex = 5;
-			this.ConvertHDF5Button.Text = "Konwertuj do HDF5";
-			this.ConvertHDF5Button.UseVisualStyleBackColor = false;
-			this.ConvertHDF5Button.Click += new System.EventHandler(this.ConvertHDF5Button_Click);
-			// 
-			// ConvertXDFButton
-			// 
-			this.ConvertXDFButton.BackColor = System.Drawing.SystemColors.ControlLight;
-			this.ConvertXDFButton.Enabled = false;
-			this.ConvertXDFButton.Location = new System.Drawing.Point(3, 91);
-			this.ConvertXDFButton.Name = "ConvertXDFButton";
-			this.ConvertXDFButton.Size = new System.Drawing.Size(203, 38);
-			this.ConvertXDFButton.TabIndex = 6;
-			this.ConvertXDFButton.Text = "Konwertuj do XDF";
-			this.ConvertXDFButton.UseVisualStyleBackColor = false;
-			// 
-			// ConvertTXTButton
-			// 
-			this.ConvertTXTButton.BackColor = System.Drawing.SystemColors.ControlLight;
-			this.ConvertTXTButton.Enabled = false;
-			this.ConvertTXTButton.Location = new System.Drawing.Point(3, 135);
-			this.ConvertTXTButton.Name = "ConvertTXTButton";
-			this.ConvertTXTButton.Size = new System.Drawing.Size(203, 38);
-			this.ConvertTXTButton.TabIndex = 7;
-			this.ConvertTXTButton.Text = "Konwertuj do TXT";
-			this.ConvertTXTButton.UseVisualStyleBackColor = false;
 			// 
 			// ViewAndConvert
 			// 
