@@ -7,23 +7,18 @@ using System.Windows.Forms.DataVisualization.Charting;
 using WfdbCsharpWrapper;
 using HDF5DotNet;
 using System.Globalization;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 namespace Program_v1
 {
 	public partial class ViewAndConvert : Form
 	{
-		private int FZoomLevel = 0;
-		private double CZoomScale = 1.1;
-		private int FZoomLevel2 = 0;
-		private double CZoomScale2 = 1.1;
-		private String fileName = "";
-		private String fileName2 = "";
-		private String fileName3 = "";
-		private String pathName = "";
-		private String pathName2 = "";
-		private static int pathlen = Directory.GetCurrentDirectory().Length;
-
-		private static String curpath = Directory.GetCurrentDirectory().Remove(pathlen - 10);
+		private static String curpath = Directory.GetCurrentDirectory().Remove(GlobalValues.pathlen - 10);
 
 		public ViewAndConvert()
 		{
@@ -36,8 +31,6 @@ namespace Program_v1
 			chart2.MouseWheel += Chart2_MouseWheel;
 		}
 
-
-		
 		private void UsingPInvoke()
 		{
 
@@ -45,12 +38,12 @@ namespace Program_v1
 			Sample[] v;
 			Signal[] s;
 
-			nsig = PInvoke.isigopen(fileName3, null, 0);
+			nsig = PInvoke.isigopen(GlobalValues.fileName3, null, 0);
 			if (nsig < 1)
 				return;
 			s = new Signal[nsig];
 
-			if (PInvoke.isigopen(fileName3, s, nsig) != nsig)
+			if (PInvoke.isigopen(GlobalValues.fileName3, s, nsig) != nsig)
 				return;
 
 			v = new Sample[nsig];
@@ -78,16 +71,16 @@ namespace Program_v1
 				{
 					StreamReader sr = new StreamReader(openFileDialog1.FileName);
 
-					pathName = Path.GetFullPath(openFileDialog1.FileName);
-					pathName2 = Path.GetFullPath(Path.ChangeExtension(openFileDialog1.FileName, ".hea"));
-					fileName2 = Path.GetFileName(Path.ChangeExtension(openFileDialog1.FileName, ".hea"));
-					fileName = Path.GetFileName(openFileDialog1.FileName);
-					fileName3 = Path.GetFileNameWithoutExtension(openFileDialog1.FileName);
+					GlobalValues.pathName = Path.GetFullPath(openFileDialog1.FileName);
+					GlobalValues.pathName2 = Path.GetFullPath(Path.ChangeExtension(openFileDialog1.FileName, ".hea"));
+					GlobalValues.fileName2 = Path.GetFileName(Path.ChangeExtension(openFileDialog1.FileName, ".hea"));
+					GlobalValues.fileName = Path.GetFileName(openFileDialog1.FileName);
+					GlobalValues.fileName3 = Path.GetFileNameWithoutExtension(openFileDialog1.FileName);
 
 					sr.Close();
 
-					File.Copy(pathName2, curpath + "/data/" + fileName2, true);
-					File.Copy(pathName, curpath + "/data/" + fileName, true);
+					File.Copy(GlobalValues.pathName2, curpath + "/data/" + GlobalValues.fileName2, true);
+					File.Copy(GlobalValues.pathName, curpath + "/data/" + GlobalValues.fileName, true);
 				}
 
 				table = UsingWrapperClasses1();
@@ -99,7 +92,25 @@ namespace Program_v1
 
 			if(GlobalValues.database == 2)
 			{
+				if (openFileDialog1.ShowDialog() == DialogResult.OK)
+				{
+					StreamReader sr = new StreamReader(openFileDialog1.FileName);
 
+					GlobalValues.pathName = Path.GetFullPath(openFileDialog1.FileName);
+					GlobalValues.pathName2 = Path.GetFullPath(Path.ChangeExtension(openFileDialog1.FileName, ".hea"));
+					GlobalValues.fileName2 = Path.GetFileName(Path.ChangeExtension(openFileDialog1.FileName, ".hea"));
+					GlobalValues.fileName = Path.GetFileName(openFileDialog1.FileName);
+					GlobalValues.fileName3 = Path.GetFileNameWithoutExtension(openFileDialog1.FileName);
+
+					sr.Close();
+
+					File.Copy(GlobalValues.pathName2, curpath + "/data/" + GlobalValues.fileName2, true);
+					File.Copy(GlobalValues.pathName, curpath + "/data/" + GlobalValues.fileName, true);
+				}
+
+				Mimic3 m = new Mimic3();
+				m.ShowDialog();
+				
 			}
 
 			ConvertHDF5Button.Enabled = true;
@@ -112,6 +123,7 @@ namespace Program_v1
 		{
 			Pomoc p = new Pomoc();
 			p.ShowDialog();
+
 		}
 
 		private void PickTimeButton_Click(object sender, EventArgs e)
@@ -121,16 +133,11 @@ namespace Program_v1
 			OpenButton.Enabled = true;
 		}
 
-
-
-
-
-
 		// ////////////////////////// CHART1 - EKG FOR MIT-BIH /////////////////////////////
 		private int[] UsingWrapperClasses1()
 		{
 
-			using (var record = new Record(fileName3))
+			using (var record = new Record(GlobalValues.fileName3))
 			{
 				int[] voltage_tab1 = new int[649800];
 
@@ -147,9 +154,8 @@ namespace Program_v1
 					{
 						if (i == 0)
 						{
-							voltage_tab1[i + pom] = s[i];
+							voltage_tab1[pom] = s[i];
 						}
-						
 					}
 					pom++;
 				}
@@ -193,13 +199,19 @@ namespace Program_v1
 
 			chart1.Series[0].IsVisibleInLegend = false;
 
-			chart1.Series.Add("V5");
-			chart1.Series["V5"].ChartType = SeriesChartType.Line;
-			chart1.Series["V5"].Color = Color.Blue;
+			string line = File.ReadLines(Directory.GetCurrentDirectory().Remove(GlobalValues.pathlen - 10) + "/data/" + GlobalValues.fileName3 + ".hea").Skip(1).Take(1).First();
+			string[] separator = { " " };
+			string[] words = line.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+			string signame = words[8];
+
+			chart1.Series.Clear();
+			chart1.Series.Add(signame);
+			chart1.Series[signame].ChartType = SeriesChartType.Line;
+			chart1.Series[signame].Color = Color.Blue;
 
 			for (int i = 0; i < GlobalValues.timeEnd - GlobalValues.timeBegin; i++)
 			{
-				chart1.Series["V5"].Points.AddXY(i, table[i]);
+				chart1.Series[signame].Points.AddXY(i, table[i]);
 			}
 		}
 
@@ -223,45 +235,38 @@ namespace Program_v1
 				double xMin = xAxis.ScaleView.ViewMinimum;
 				double xMax = xAxis.ScaleView.ViewMaximum;
 				double xPixelPosition = xAxis.PixelPositionToValue(e.Location.X);
-				FZoomLevel = 1000;
+				GlobalValues.FZoomLevel = 1000;
 
-				if (e.Delta < 0 && FZoomLevel > 0)
+				if (e.Delta < 0 && GlobalValues.FZoomLevel > 0)
 				{
-					if (--FZoomLevel <= 0)
+					if (--GlobalValues.FZoomLevel <= 0)
 					{
-						FZoomLevel = 0;
+						GlobalValues.FZoomLevel = 0;
 						xAxis.ScaleView.ZoomReset();
 					}
 					else
 					{
-						int xStartPos = (int)Math.Max(xPixelPosition - (xPixelPosition - xMin) * CZoomScale, 0);
-						int xEndPos = (int)Math.Min(xStartPos + (xMax - xMin) * CZoomScale, xAxis.Maximum);
+						int xStartPos = (int)Math.Max(xPixelPosition - (xPixelPosition - xMin) * GlobalValues.CZoomScale, 0);
+						int xEndPos = (int)Math.Min(xStartPos + (xMax - xMin) * GlobalValues.CZoomScale, xAxis.Maximum);
 						xAxis.ScaleView.Zoom(xStartPos, xEndPos);
 					}
 				}
 				else if (e.Delta > 0)
 				{
-					int xStartPos = (int)Math.Max(xPixelPosition - (xPixelPosition - xMin) / CZoomScale, 0);
-					int xEndPos = (int)Math.Min(xStartPos + (xMax - xMin) / CZoomScale, xAxis.Maximum);
+					int xStartPos = (int)Math.Max(xPixelPosition - (xPixelPosition - xMin) / GlobalValues.CZoomScale, 0);
+					int xEndPos = (int)Math.Min(xStartPos + (xMax - xMin) / GlobalValues.CZoomScale, xAxis.Maximum);
 					xAxis.ScaleView.Zoom(xStartPos, xEndPos);
-					FZoomLevel++;
+					GlobalValues.FZoomLevel++;
 				}
 			}
 			catch { }
 		}
 
-
-
-
-
-
-
-
 		// ////////////////// CHART 2 FOR MIT-BIH /////////////////////
 
 		private int[] UsingWrapperClasses2()
 		{
-			using (var record = new Record(fileName3))
+			using (var record = new Record(GlobalValues.fileName3))
 			{
 				int[] voltage_tab2 = new int[649800];
 
@@ -324,15 +329,18 @@ namespace Program_v1
 
 			chart2.Series[0].IsVisibleInLegend = false;
 
-			chart2.Series.Add("V2");
-			chart2.Series["V2"].ChartType = SeriesChartType.Line;
-			chart2.Series["V2"].Color = Color.Red;
+			string line = File.ReadLines(Directory.GetCurrentDirectory().Remove(GlobalValues.pathlen - 10) + "/data/" + GlobalValues.fileName3 + ".hea").Skip(2).Take(1).First();
+			string[] separator = { " " };
+			string[] words = line.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+			string signame = words[8];
 
-			
+			chart2.Series.Add(signame);
+			chart2.Series[signame].ChartType = SeriesChartType.Line;
+			chart2.Series[signame].Color = Color.Red;
 
 			for (int i = 0; i < GlobalValues.timeEnd - GlobalValues.timeBegin; i++)
 			{
-				chart2.Series["V2"].Points.AddXY(i, table[i]);
+				chart2.Series[signame].Points.AddXY(i, table[i]);
 			}
 		}
 
@@ -356,34 +364,32 @@ namespace Program_v1
 				double xMin = xAxis.ScaleView.ViewMinimum;
 				double xMax = xAxis.ScaleView.ViewMaximum;
 				double xPixelPosition = xAxis.PixelPositionToValue(e.Location.X);
-				FZoomLevel = 1000;
+				GlobalValues.FZoomLevel = 1000;
 
-				if (e.Delta < 0 && FZoomLevel2 > 0)
+				if (e.Delta < 0 && GlobalValues.FZoomLevel2 > 0)
 				{
-					if (--FZoomLevel2 <= 0)
+					if (--GlobalValues.FZoomLevel2 <= 0)
 					{
-						FZoomLevel2 = 0;
+						GlobalValues.FZoomLevel2 = 0;
 						xAxis.ScaleView.ZoomReset();
 					}
 					else
 					{
-						int xStartPos = (int)Math.Max(xPixelPosition - (xPixelPosition - xMin) * CZoomScale2, 0);
-						int xEndPos = (int)Math.Min(xStartPos + (xMax - xMin) * CZoomScale2, xAxis.Maximum);
+						int xStartPos = (int)Math.Max(xPixelPosition - (xPixelPosition - xMin) * GlobalValues.CZoomScale2, 0);
+						int xEndPos = (int)Math.Min(xStartPos + (xMax - xMin) * GlobalValues.CZoomScale2, xAxis.Maximum);
 						xAxis.ScaleView.Zoom(xStartPos, xEndPos);
 					}
 				}
 				else if (e.Delta > 0)
 				{
-					int xStartPos = (int)Math.Max(xPixelPosition - (xPixelPosition - xMin) / CZoomScale2, 0);
-					int xEndPos = (int)Math.Min(xStartPos + (xMax - xMin) / CZoomScale2, xAxis.Maximum);
+					int xStartPos = (int)Math.Max(xPixelPosition - (xPixelPosition - xMin) / GlobalValues.CZoomScale2, 0);
+					int xEndPos = (int)Math.Min(xStartPos + (xMax - xMin) / GlobalValues.CZoomScale2, xAxis.Maximum);
 					xAxis.ScaleView.Zoom(xStartPos, xEndPos);
-					FZoomLevel2++;
+					GlobalValues.FZoomLevel2++;
 				}
 			}
 			catch { }
 		}
-
-		
 
 		private void PickDatabase_Click(object sender, EventArgs e)
 		{
@@ -391,14 +397,6 @@ namespace Program_v1
 			b.ShowDialog();
 			PickTimeButton.Enabled = true;
 		}
-
-
-
-
-
-
-		
-
 
 		// ///////// CONVERT TO HDF5 MIT-BIH ////////////////
 
@@ -435,7 +433,43 @@ namespace Program_v1
 				H5DataSpaceId spaceIdatr = H5S.create_simple(1, dimsatr);
 				H5AttributeId attr = H5A.create(fileId, "Fs", typeIdatr,spaceIdatr);
 				H5A.write(attr, new H5DataTypeId(H5T.H5Type.NATIVE_FLOAT), new H5Array<float>(attribute));
-				
+
+				string[] separator = { " ", "/" };
+				string[] words;
+				string[,] tableinfo = new string[GlobalValues.sig, 2];
+				string lineinfo;
+				for (int i = 1; i < 3; i++)
+				{
+					lineinfo = File.ReadLines(Directory.GetCurrentDirectory().Remove(GlobalValues.pathlen - 10) + "/data/" + GlobalValues.fileName3 + ".hea").Skip(i).Take(1).First();
+					words = lineinfo.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+					tableinfo[i - 1, 0] = words[9];
+					tableinfo[i - 1, 1] = words[3];
+				}
+
+				long[] dimsinfo = new long[2];
+				dimsinfo[0] = 2;
+				dimsinfo[1] = 2;
+
+				IntPtr[,] pointers = new IntPtr[2, 2];
+
+				string[,] dset_info = new string[2, 2];
+				int l = 0;
+				for (int i = 0; i < 2; i++)
+				{
+					for (int k = 0; k < 2; k++)
+					{
+						dset_info[k, l] = tableinfo[k, i];
+						pointers[k, l] = Marshal.StringToHGlobalAnsi(dset_info[k, l]);
+					}
+					l++;
+				}
+
+
+				H5DataSpaceId spaceIdinfo = H5S.create_simple(RANK, dimsinfo);
+				H5DataTypeId typeIdinfo = H5T.create(H5T.CreateClass.STRING, -1);
+				H5DataSetId dataSetIdinfo = H5D.create(fileId, "/Info", typeIdinfo, spaceIdinfo);
+				H5D.write(dataSetIdinfo, typeIdinfo, new H5Array<IntPtr>(pointers));
+
 
 
 				// Utworzenie grupy HDF5.
@@ -534,11 +568,7 @@ namespace Program_v1
 			ConvertToHDF5(UsingWrapperClasses1(),UsingWrapperClasses2());
 		}
 
-
-
-
 		// //////// CONVERT TO XDF - MIT-BIH /////////
-
 
 		public void ConvertToXDF(int[] table, int[] table2)
 		{
@@ -583,8 +613,20 @@ namespace Program_v1
 
 	public static class GlobalValues
 	{
+		public static int sig = 0;
+		public static int samp = 0;
 		public static double timeBegin = 0;
 		public static double timeEnd = 649800;
 		public static int database = 0;
+		public static int FZoomLevel = 0;
+		public static double CZoomScale = 1.1;
+		public static int FZoomLevel2 = 0;
+		public static double CZoomScale2 = 1.1;
+		public static String fileName = "";
+		public static String fileName2 = "";
+		public static String fileName3 = "";
+		public static String pathName = "";
+		public static String pathName2 = "";
+		public static int pathlen = Directory.GetCurrentDirectory().Length;
 	}
 }

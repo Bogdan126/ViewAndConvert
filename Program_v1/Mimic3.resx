@@ -117,16 +117,7 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="textBox1.Text" xml:space="preserve">
-    <value>Pliki zawierające sygnały oraz odpowiadające im pliki nagłówkowe muszą znajdować się w tym samym katalogu na dysku komputera, na którym jest uruchomiona aplikacja. 
-Jeśli pliki znajdują się w oddzielnych folderach, program nie zadziała poprawnie.
-
-Domyślnie przedział czasu ustawiony jest na pokazanie całych sygnałów zawartych w pliku, przez co mogą być one nieczytelne i zajmować dużo pamięci przez ładowanie zbyt dużej ilości próbek. 
-Zaleca się wybrać konkretny przedział czasu, który zamierza się analizować w celu uniknięcia niepotrzebnych niedogodności.
-
-Konwersja została przetestowana za pomocą programów HDFView, Microsoft Excel oraz SignalPlant i jest kompatybilna z tymi programami. 
-Dane skonwertowane mogą nie zostać odczytane poprawnie przez inne oprogramowania.
-
-</value>
-  </data>
+  <metadata name="openFileDialog1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
 </root>

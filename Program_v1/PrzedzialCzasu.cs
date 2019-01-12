@@ -20,25 +20,49 @@ namespace Program_v1
 
 		private void ChangeTimeButton_Click(object sender, EventArgs e)
 		{
-			double a=0, b=0, c=0, d=0;
-			if (Beginning.Text != "" && BeginningSec.Text != "" && End.Text != "" && EndSec.Text != "")
+			if (GlobalValues.database == 1)
 			{
-				a = Convert.ToDouble(Beginning.Text);
-				b = Convert.ToDouble(BeginningSec.Text);
-				c = Convert.ToDouble(End.Text);
-				d = Convert.ToDouble(EndSec.Text);
+				double a = 0, b = 0, c = 0, d = 0;
+				if (Beginning.Text != "" && BeginningSec.Text != "" && End.Text != "" && EndSec.Text != "")
+				{
+					a = Convert.ToDouble(Beginning.Text);
+					b = Convert.ToDouble(BeginningSec.Text);
+					c = Convert.ToDouble(End.Text);
+					d = Convert.ToDouble(EndSec.Text);
+				}
+
+				if (Beginning.Text != "" && BeginningSec.Text != "" && a < 31 && a >= 0 && b < 60 && b >= 0)
+				{
+					GlobalValues.timeBegin = (a * 60 + b) * 360;
+				}
+				if (End.Text != "" && EndSec.Text != "" && c < 31 && c >= 0 && d < 60 && d >= 0)
+				{
+					GlobalValues.timeEnd = (c * 60 + d) * 360;
+				}
 			}
 
-			if (Beginning.Text != "" && BeginningSec.Text != "" && a<31 && a>=0 && b<60 && b>=0)
+			if (GlobalValues.database == 2)
 			{
-				GlobalValues.timeBegin = (a*60+b)*360;
-			}
-			if(End.Text != "" && EndSec.Text!="" && c < 31 && c >= 0 && d < 60 && d >= 0)
-			{
-				GlobalValues.timeEnd = (c*60+d)*360;
-			}
+				double a = 0, b = 0, c = 0, d = 0;
+				if (Beginning.Text != "" && BeginningSec.Text != "" && End.Text != "" && EndSec.Text != "")
+				{
+					a = Convert.ToDouble(Beginning.Text);
+					b = Convert.ToDouble(BeginningSec.Text);
+					c = Convert.ToDouble(End.Text);
+					d = Convert.ToDouble(EndSec.Text);
+				}
 
-				this.Close();
+				if (Beginning.Text != "" && BeginningSec.Text != "" && a >= 0 && b >= 0)
+				{
+					GlobalValues.timeBegin = (a * 60 + b) * 125;
+				}
+				if (End.Text != "" && EndSec.Text != "" && c >= 0 && d >= 0)
+				{
+					GlobalValues.timeEnd = (c * 60 + d) * 125;
+				}
+			}
+		
+			this.Close();
 		}
 	}
 }

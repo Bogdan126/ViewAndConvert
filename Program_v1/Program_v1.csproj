@@ -113,6 +113,12 @@
     <Compile Include="BazaDanych.Designer.cs">
       <DependentUpon>BazaDanych.cs</DependentUpon>
     </Compile>
+    <Compile Include="Mimic3.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Mimic3.Designer.cs">
+      <DependentUpon>Mimic3.cs</DependentUpon>
+    </Compile>
     <Compile Include="ViewAndConvert.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -135,6 +141,9 @@
     </Compile>
     <EmbeddedResource Include="BazaDanych.resx">
       <DependentUpon>BazaDanych.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Mimic3.resx">
+      <DependentUpon>Mimic3.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ViewAndConvert.resx">
       <DependentUpon>ViewAndConvert.cs</DependentUpon>

@@ -38,15 +38,16 @@
 			this.textBox1.Location = new System.Drawing.Point(13, 13);
 			this.textBox1.Multiline = true;
 			this.textBox1.Name = "textBox1";
-			this.textBox1.Size = new System.Drawing.Size(479, 62);
+			this.textBox1.Size = new System.Drawing.Size(474, 177);
 			this.textBox1.TabIndex = 0;
 			this.textBox1.Text = resources.GetString("textBox1.Text");
+			this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
 			// 
 			// Pomoc
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(505, 95);
+			this.ClientSize = new System.Drawing.Size(499, 202);
 			this.Controls.Add(this.textBox1);
 			this.Name = "Pomoc";
 			this.Text = "Pomoc";
