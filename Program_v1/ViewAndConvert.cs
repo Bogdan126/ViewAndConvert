@@ -203,7 +203,9 @@ namespace Program_v1
 			string[] separator = { " " };
 			string[] words = line.Split(separator, StringSplitOptions.RemoveEmptyEntries);
 			string signame = words[8];
-
+			chart.AxisX.Title = "sample count";
+			chart.AxisY.Title = "Voltage [μV]";
+			chart.AxisY.TextOrientation = TextOrientation.Horizontal;
 			chart1.Series.Clear();
 			chart1.Series.Add(signame);
 			chart1.Series[signame].ChartType = SeriesChartType.Line;
@@ -334,6 +336,11 @@ namespace Program_v1
 			string[] words = line.Split(separator, StringSplitOptions.RemoveEmptyEntries);
 			string signame = words[8];
 
+			chart.AxisX.Title = "sample count";
+			chart.AxisY.Title = "Voltage [μV]";
+			chart.AxisY.TextOrientation = TextOrientation.Horizontal;
+
+			chart2.Series.Clear();
 			chart2.Series.Add(signame);
 			chart2.Series[signame].ChartType = SeriesChartType.Line;
 			chart2.Series[signame].Color = Color.Red;
@@ -433,43 +440,6 @@ namespace Program_v1
 				H5DataSpaceId spaceIdatr = H5S.create_simple(1, dimsatr);
 				H5AttributeId attr = H5A.create(fileId, "Fs", typeIdatr,spaceIdatr);
 				H5A.write(attr, new H5DataTypeId(H5T.H5Type.NATIVE_FLOAT), new H5Array<float>(attribute));
-
-				string[] separator = { " ", "/" };
-				string[] words;
-				string[,] tableinfo = new string[GlobalValues.sig, 2];
-				string lineinfo;
-				for (int i = 1; i < 3; i++)
-				{
-					lineinfo = File.ReadLines(Directory.GetCurrentDirectory().Remove(GlobalValues.pathlen - 10) + "/data/" + GlobalValues.fileName3 + ".hea").Skip(i).Take(1).First();
-					words = lineinfo.Split(separator, StringSplitOptions.RemoveEmptyEntries);
-					tableinfo[i - 1, 0] = words[9];
-					tableinfo[i - 1, 1] = words[3];
-				}
-
-				long[] dimsinfo = new long[2];
-				dimsinfo[0] = 2;
-				dimsinfo[1] = 2;
-
-				IntPtr[,] pointers = new IntPtr[2, 2];
-
-				string[,] dset_info = new string[2, 2];
-				int l = 0;
-				for (int i = 0; i < 2; i++)
-				{
-					for (int k = 0; k < 2; k++)
-					{
-						dset_info[k, l] = tableinfo[k, i];
-						pointers[k, l] = Marshal.StringToHGlobalAnsi(dset_info[k, l]);
-					}
-					l++;
-				}
-
-
-				H5DataSpaceId spaceIdinfo = H5S.create_simple(RANK, dimsinfo);
-				H5DataTypeId typeIdinfo = H5T.create(H5T.CreateClass.STRING, -1);
-				H5DataSetId dataSetIdinfo = H5D.create(fileId, "/Info", typeIdinfo, spaceIdinfo);
-				H5D.write(dataSetIdinfo, typeIdinfo, new H5Array<IntPtr>(pointers));
-
 
 
 				// Utworzenie grupy HDF5.
@@ -589,10 +559,21 @@ namespace Program_v1
 			StringBuilder s = new StringBuilder();
 			j = 0;
 
-			s.AppendFormat("{0},{1},{2}", "'Elapsed time'", "'V5'","'V2'");
+			string line = File.ReadLines(Directory.GetCurrentDirectory().Remove(GlobalValues.pathlen - 10) + "/data/" + GlobalValues.fileName3 + ".hea").Skip(1).Take(1).First();
+			string[] separator = { " " };
+			string[] words = line.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+			string signame = words[8];
+
+			string line2 = File.ReadLines(Directory.GetCurrentDirectory().Remove(GlobalValues.pathlen - 10) + "/data/" + GlobalValues.fileName3 + ".hea").Skip(2).Take(1).First();
+			string[] separator2 = { " " };
+			string[] words2 = line2.Split(separator2, StringSplitOptions.RemoveEmptyEntries);
+			string signame2 = words2[8];
+
+			s.AppendFormat("{0},{1},{2}", "'Elapsed time'", "'"+signame+"'","'"+signame2+"'");
 			s.AppendLine();
 			s.AppendFormat("{0},{1},{2}", "'mm:ss.mmm'", "'uV'", "'uV'");
 			s.AppendLine();
+
 			for (int i = Convert.ToInt32(GlobalValues.timeBegin); i < Convert.ToInt32(GlobalValues.timeEnd); i++)
 			{
 				if (j != 0)
@@ -603,6 +584,8 @@ namespace Program_v1
 				j++;
 			}
 			File.WriteAllText(Directory.GetCurrentDirectory() + "/TestSignals.csv", s.ToString());
+			
+
 		}
 
 		private void ConvertXDFButton_Click(object sender, EventArgs e)

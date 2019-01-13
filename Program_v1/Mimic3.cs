@@ -12,7 +12,7 @@ using HDF5DotNet;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.IO;
 using System.Runtime.InteropServices;
-
+using System.Globalization;
 
 namespace Program_v1
 {
@@ -33,11 +33,12 @@ namespace Program_v1
 			else max = GlobalValues.samp;
 
 			double a = 0, b = table[sign][0], c = table[sign][0]; ;
-
-			for (int i = 0; i < GlobalValues.samp; i++)
+			int pom = Convert.ToInt32(max - min);
+			for (int i = 0; i < pom; i++)
 			{
 				if (b > a) a = b;
-				if (b < c) c = b;
+				if (b < c && b/c > 0.5 && b>(-1000)) c = b;
+				
 				b = table[sign][i];
 			}
 
@@ -58,29 +59,29 @@ namespace Program_v1
 			chart.AxisY.Maximum = a;
 			chart.AxisX.Interval = (max - min) / 20;
 			chart.AxisY.Interval = (a - c) / 10;
-
 			chart1.Series[0].IsVisibleInLegend = false;
-
 			chart1.Series.Clear();
 
 			string line = File.ReadLines(Directory.GetCurrentDirectory().Remove(GlobalValues.pathlen - 10) + "/data/" + GlobalValues.fileName3 + ".hea").Skip(sign+1).Take(1).First();
-			string[] separator = { " " };
+			string[] separator = { " ","/" };
 			string[] words = line.Split(separator, StringSplitOptions.RemoveEmptyEntries);
-			string signame = words[8];
-
+			string signame = words[9];
+			chart.AxisX.Title = "sample count";
+			chart.AxisY.Title = words[3];
+			chart.AxisY.TextOrientation = TextOrientation.Horizontal;
 			chart1.Series.Add(signame);
 			chart1.Series[signame].ChartType = SeriesChartType.Line;
 			chart1.Series[signame].Color = Color.Red;
-
-			for (int i = 0; i < GlobalValues.samp; i++)
+			
+			for (int i = 0; i < pom; i++)
 			{
-				chart1.Series[signame].Points.AddXY(i, table[sign][i]);
+				if(table[sign][i]>(-1000))
+				chart1.Series[signame].Points.AddXY(i+min, table[sign][i]);
 			}
 		}
 
 		private void UsingPInvoke()
 		{
-
 			int i, j, nsig;
 			Sample[] v;
 			Signal[] s;
@@ -107,8 +108,6 @@ namespace Program_v1
 
 		private double[][] UsingWrapperClasses1(int p, int r)
 		{
-
-			// Odczyt ilości próbek z pliku nagłówkowego
 			StreamReader file = new StreamReader(Directory.GetCurrentDirectory().Remove(GlobalValues.pathlen - 10) + "/data/" + GlobalValues.fileName3 + ".hea");
 			string line = file.ReadLine();
 			string[] separator = { " " };
@@ -116,12 +115,21 @@ namespace Program_v1
 			int sampcount = Convert.ToInt32(words[3]);
 			GlobalValues.samp = sampcount;
 
+			int min = 0, max = 0;
+			if (GlobalValues.timeBegin > 0) min = Convert.ToInt32(GlobalValues.timeBegin);
+			else min = 0;
+
+			if (GlobalValues.timeEnd < GlobalValues.samp) max = Convert.ToInt32(GlobalValues.timeEnd);
+			else max = GlobalValues.samp;
+
+			// Odczyt ilości próbek z pliku nagłówkowego
+			
 			using (var record = new Record(GlobalValues.fileName3))
 			{
 				double[][] array = new double[p][];
 				for(int i=0;i<p;i++)
 				{
-					array[i] = new double[sampcount];
+					array[i] = new double[max-min];
 				}
 				int pom = 0;
 
@@ -129,15 +137,17 @@ namespace Program_v1
 
 				var samples = record.GetSamples(sampcount);
 
+				samples.RemoveRange(0, min);
+				samples.RemoveRange(max - min-1, sampcount - max + 1);
 				foreach (var s in samples)
 				{
-
 					for (int i = 0; i < s.Length; i++)
 					{		
 							array[r][pom] = s[r];
 					}
 					pom++;
 				}
+				samples.Clear();
 				Wfdb.Quit();
 				return array;
 			}
@@ -145,8 +155,6 @@ namespace Program_v1
 
 		private double[][] UsingWrapperClasses2(int p)
 		{
-
-			// Odczyt ilości próbek z pliku nagłówkowego
 			StreamReader file = new StreamReader(Directory.GetCurrentDirectory().Remove(GlobalValues.pathlen - 10) + "/data/" + GlobalValues.fileName3 + ".hea");
 			string line = file.ReadLine();
 			string[] separator = { " " };
@@ -154,18 +162,30 @@ namespace Program_v1
 			int sampcount = Convert.ToInt32(words[3]);
 			GlobalValues.samp = sampcount;
 
+			int min = 0, max = 0;
+			if (GlobalValues.timeBegin > 0) min = Convert.ToInt32(GlobalValues.timeBegin);
+			else min = 0;
+
+			if (GlobalValues.timeEnd < GlobalValues.samp) max = Convert.ToInt32(GlobalValues.timeEnd);
+			else max = GlobalValues.samp;
+
+			// Odczyt ilości próbek z pliku nagłówkowego
+			
+
 			using (var record = new Record(GlobalValues.fileName3))
 			{
 				double[][] array = new double[p][];
 				for (int i = 0; i < p; i++)
 				{
-					array[i] = new double[sampcount];
+					array[i] = new double[max-min];
 				}
 				int pom = 0;
 
 				record.Open();
 
 				var samples = record.GetSamples(sampcount);
+				samples.RemoveRange(0, min);
+				samples.RemoveRange(max - min - 1, sampcount - max + 1);
 
 				foreach (var s in samples)
 				{
@@ -357,8 +377,6 @@ namespace Program_v1
 			catch { }
 		}
 
-
-
 	////////////////// CONVERT TO HDF5 - MIMIC-3 /////////////////
 
 		static int Function(H5GroupId id, string objectName, Object param)
@@ -379,6 +397,8 @@ namespace Program_v1
 				if (GlobalValues.timeEnd < GlobalValues.samp) max = GlobalValues.timeEnd;
 				else max = GlobalValues.samp;
 
+				int pom = Convert.ToInt32(max - min);
+
 				// Zapisywanie i odczytanie tablicy typu double
 				int DATA_ARRAY_LENGTH = Convert.ToInt32(max) - Convert.ToInt32(min);
 
@@ -386,9 +406,7 @@ namespace Program_v1
 				const int RANK = 2;
 
 				// Utworzenie pliku HDF5
-				H5FileId fileId = H5F.create("SignalTest.h5",
-											 H5F.CreateMode.ACC_TRUNC);
-
+				H5FileId fileId = H5F.create("SignalTest.h5", H5F.CreateMode.ACC_TRUNC);
 
 				// ATTRIBUTES //
 				long[] dimsatr = new long[1];
@@ -399,7 +417,6 @@ namespace Program_v1
 				H5DataSpaceId spaceIdatr = H5S.create_simple(1, dimsatr);
 				H5AttributeId attr = H5A.create(fileId, "Fs", typeIdatr, spaceIdatr);
 				H5A.write(attr, new H5DataTypeId(H5T.H5Type.NATIVE_FLOAT), new H5Array<float>(attribute));
-
 
 				// INFO //
 
@@ -423,6 +440,7 @@ namespace Program_v1
 
 				string[,] dset_info = new string[sigc, 2];
 				int l = 0;
+
 				for (int i = 0; i < 2; i++)
 				{
 					for (int k = 0; k < sigc; k++)
@@ -433,12 +451,10 @@ namespace Program_v1
 					l++;
 				}
 
-
 				H5DataSpaceId spaceIdinfo = H5S.create_simple(RANK, dimsinfo);
 				H5DataTypeId typeIdinfo = H5T.create(H5T.CreateClass.STRING, -1);
 				H5DataSetId dataSetIdinfo = H5D.create(fileId, "/Info", typeIdinfo, spaceIdinfo);
 				H5D.write(dataSetIdinfo, typeIdinfo , new H5Array<IntPtr>(pointers));
-
 
 				// Utworzenie grupy HDF5.
 				H5GroupId groupId = H5G.create(fileId, "/cSharpGroup");
@@ -447,9 +463,7 @@ namespace Program_v1
 				// Pobieranie informacje o obiekcie
 				ObjectInfo info = H5G.getObjectInfo(fileId, "/cSharpGroup", true);
 
-
 				H5G.close(subGroup);
-
 
 				// ///////// DATA /////////
 
@@ -463,7 +477,7 @@ namespace Program_v1
 				// Wpisanie danych
 				float[,] dset_data = new float[sigc, DATA_ARRAY_LENGTH];
 				int j = 0;
-				for (int i = Convert.ToInt32(min); i < Convert.ToInt32(max); i++)
+				for (int i = 0; i < pom; i++)
 				{
 					for (int k = 0; k < sigc; k++)
 					{
@@ -511,8 +525,6 @@ namespace Program_v1
 				dims_info[0] = RANK;
 				dims_info[1] = 2;
 
-
-
 				//int x = 10;
 				//H5T.enumInsert<int>(typeId, "myString", ref x);
 				//H5G.close(groupId);
@@ -534,7 +546,6 @@ namespace Program_v1
 				Console.WriteLine(ex.Message);
 			}
 		}
-
 		private void ConvertToHDF5Button_Click(object sender, EventArgs e)
 		{
 			StreamReader file = new StreamReader(Directory.GetCurrentDirectory().Remove(GlobalValues.pathlen - 10) + "/data/" + GlobalValues.fileName3 + ".hea");
@@ -544,6 +555,249 @@ namespace Program_v1
 			int sigcount = Convert.ToInt32(words[1]);
 			GlobalValues.sig = sigcount;
 			ConvertToHDF5(UsingWrapperClasses2(sigcount), sigcount);
+		}
+
+		//////////// CONVERT TO XDF - MIMIC-III /////////////
+
+		public void ConvertToXDF(double[][] table, int sigc, int t)
+		{
+			double min = 0, max = 0;
+			if (GlobalValues.timeBegin > 0) min = GlobalValues.timeBegin;
+			else min = 0;
+
+			if (GlobalValues.timeEnd < GlobalValues.samp) max = GlobalValues.timeEnd;
+			else max = GlobalValues.samp;
+
+			int pom = Convert.ToInt32(max - min);
+
+			// Zapisywanie i odczytanie tablicy typu double
+			int DATA_ARRAY_LENGTH = Convert.ToInt32(max) - Convert.ToInt32(min);
+
+			double[,] signaltable = new double[sigc, DATA_ARRAY_LENGTH];
+
+			int j = 0;
+			double p = 0;
+
+			for (int i = 0; i < pom; i++)
+			{
+				for (int k = 0; k < sigc; k++)
+				{
+					signaltable[k, j] = table[k][i];
+				}
+				j++;
+			}
+
+			StringBuilder s = new StringBuilder();
+			j = 0;
+
+			// Nazwy sygnałów i ich jednostki
+			string[] separator = { " ", "/" };
+			string[] words;
+			string[,] tableinfo = new string[GlobalValues.sig, 2];
+			string lineinfo;
+			for (int i = 1; i < sigc + 1; i++)
+			{
+				lineinfo = File.ReadLines(Directory.GetCurrentDirectory().Remove(GlobalValues.pathlen - 10) + "/data/" + GlobalValues.fileName3 + ".hea").Skip(i).Take(1).First();
+				words = lineinfo.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+				tableinfo[i - 1, 0] = words[9];
+				tableinfo[i - 1, 1] = words[3];
+			}
+
+			string[] firstlinearray = { "{0}",
+				"{0},{1}",
+				"{0},{1},{2}",
+				"{0},{1},{2},{3}",
+				"{0},{1},{2},{3},{4}",
+				"{0},{1},{2},{3},{4},{5}",
+				"{0},{1},{2},{3},{4},{5},{6}",
+				"{0},{1},{2},{3},{4},{5},{6},{7}",
+				"{0},{1},{2},{3},{4},{5},{6},{7},{8}",
+				"{0},{1},{2},{3},{4},{5},{6},{7},{8},{9}",
+				"{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}"};
+
+			string firstline = "{0}";
+			
+				 firstline = firstlinearray[sigc];
+
+			if (sigc == 1)
+			{
+				s.AppendFormat(firstline, "'Elapsed time'", "'"+tableinfo[0,0]+"'");
+				s.AppendLine();
+				s.AppendFormat(firstline, "'mm:ss.mmm'", "'"+tableinfo[0,1]+"'");
+				s.AppendLine();
+
+				for (double i = 0; i < pom; i++)
+				{
+					if (j != 0)
+						p = Convert.ToDouble(j) / 125;
+					else p = 0;
+					s.AppendFormat(firstline, "'0:" + p.ToString("00.000", CultureInfo.GetCultureInfo("en-US")) + "'", signaltable[0, j].ToString());
+					s.AppendLine();
+					j++;
+				}
+			}
+
+			if (sigc == 2)
+			{
+				s.AppendFormat(firstline, "'Elapsed time'", "'" + tableinfo[0, 0] + "'", "'" + tableinfo[1, 0] + "'");
+				s.AppendLine();
+				s.AppendFormat(firstline, "'mm:ss.mmm'", "'" + tableinfo[0, 1] + "'", "'" + tableinfo[1, 1] + "'");
+				s.AppendLine();
+
+				for (double i = 0; i < pom; i++)
+				{
+					if (j != 0)
+						p = Convert.ToDouble(j) / 125;
+					else p = 0;
+					s.AppendFormat(firstline, "'0:" + p.ToString("00.000", CultureInfo.GetCultureInfo("en-US")) + "'", signaltable[0, j].ToString(), signaltable[1, j].ToString());
+					s.AppendLine();
+					j++;
+				}
+			}
+
+			if (sigc == 3)
+			{
+				s.AppendFormat(firstline, "'Elapsed time'", "'" + tableinfo[0, 0] + "'", "'" + tableinfo[1, 0] + "'", "'" + tableinfo[2, 0] + "'");
+				s.AppendLine();
+				s.AppendFormat(firstline, "'mm:ss.mmm'", "'" + tableinfo[0, 1] + "'", "'" + tableinfo[1, 1] + "'", "'" + tableinfo[2, 1] + "'");
+				s.AppendLine();
+
+				for (double i = 0; i < pom; i++)
+				{
+					if (j != 0)
+						p = Convert.ToDouble(j) / 125;
+					else p = 0;
+					s.AppendFormat(firstline, "'0:" + p.ToString("00.000", CultureInfo.GetCultureInfo("en-US")) + "'", signaltable[0, j].ToString(), signaltable[1, j].ToString(), signaltable[2, j].ToString());
+					s.AppendLine();
+					j++;
+				}
+			}
+
+			if (sigc == 4)
+			{
+				s.AppendFormat(firstline, "'Elapsed time'", "'" + tableinfo[0, 0] + "'", "'" + tableinfo[1, 0] + "'", "'" + tableinfo[2, 0] + "'", "'" + tableinfo[2, 0] + "'");
+				s.AppendLine();
+				s.AppendFormat(firstline, "'mm:ss.mmm'", "'" + tableinfo[0, 1] + "'", "'" + tableinfo[1, 1] + "'", "'" + tableinfo[2, 1] + "'", "'" + tableinfo[2, 1] + "'");
+				s.AppendLine();
+
+				for (double i = 0; i < pom; i++)
+				{
+					if (j != 0)
+						p = Convert.ToDouble(j) / 125;
+					else p = 0;
+					s.AppendFormat(firstline, "'0:" + p.ToString("00.000", CultureInfo.GetCultureInfo("en-US")) + "'", signaltable[0, j].ToString(), signaltable[1, j].ToString(), signaltable[2, j].ToString(), signaltable[3, j].ToString());
+					s.AppendLine();
+					j++;
+				}
+			}
+
+			if (sigc == 5)
+			{
+				s.AppendFormat(firstline, "'Elapsed time'", "'" + tableinfo[0, 0] + "'", "'" + tableinfo[1, 0] + "'", "'" + tableinfo[2, 0] + "'", "'" + tableinfo[3, 0] + "'", "'" + tableinfo[4, 0] + "'");
+				s.AppendLine();
+				s.AppendFormat(firstline, "'mm:ss.mmm'", "'" + tableinfo[0, 1] + "'", "'" + tableinfo[1, 1] + "'", "'" + tableinfo[2, 1] + "'", "'" + tableinfo[3, 1] + "'", "'" + tableinfo[4, 1] + "'");
+				s.AppendLine();
+
+				for (double i = 0; i < pom; i++)
+				{
+					if (j != 0)
+						p = Convert.ToDouble(j) / 125;
+					else p = 0;
+					s.AppendFormat(firstline, "'0:" + p.ToString("00.000", CultureInfo.GetCultureInfo("en-US")) + "'", signaltable[0, j].ToString(), signaltable[1, j].ToString(), signaltable[2, j].ToString(), signaltable[3, j].ToString(), signaltable[4, j].ToString());
+					s.AppendLine();
+					j++;
+				}
+			}
+
+			if (sigc == 6)
+			{
+				s.AppendFormat(firstline, "'Elapsed time'", "'" + tableinfo[0, 0] + "'", "'" + tableinfo[1, 0] + "'", "'" + tableinfo[2, 0] + "'", "'" + tableinfo[3, 0] + "'", "'" + tableinfo[4, 0] + "'", "'" + tableinfo[5, 0] + "'");
+				s.AppendLine();
+				s.AppendFormat(firstline, "'mm:ss.mmm'", "'" + tableinfo[0, 1] + "'", "'" + tableinfo[1, 1] + "'", "'" + tableinfo[2, 1] + "'", "'" + tableinfo[3, 1] + "'", "'" + tableinfo[4, 1] + "'", "'" + tableinfo[5, 1] + "'");
+				s.AppendLine();
+
+				for (double i = 0; i < pom; i++)
+				{
+					if (j != 0)
+						p = Convert.ToDouble(j) / 125;
+					else p = 0;
+					s.AppendFormat(firstline, "'0:" + p.ToString("00.000", CultureInfo.GetCultureInfo("en-US")) + "'", signaltable[0, j].ToString(), signaltable[1, j].ToString(), signaltable[2, j].ToString(), signaltable[3, j].ToString(), signaltable[4, j].ToString(), signaltable[5, j].ToString());
+					s.AppendLine();
+					j++;
+				}
+			}
+
+			if (sigc == 7)
+			{
+				s.AppendFormat(firstline, "'Elapsed time'", "'" + tableinfo[0, 0] + "'", "'" + tableinfo[1, 0] + "'", "'" + tableinfo[2, 0] + "'", "'" + tableinfo[3, 0] + "'", "'" + tableinfo[4, 0] + "'", "'" + tableinfo[5, 0] + "'", "'" + tableinfo[6, 0] + "'");
+				s.AppendLine();
+				s.AppendFormat(firstline, "'mm:ss.mmm'", "'" + tableinfo[0, 1] + "'", "'" + tableinfo[1, 1] + "'", "'" + tableinfo[2, 1] + "'", "'" + tableinfo[3, 1] + "'", "'" + tableinfo[4, 1] + "'", "'" + tableinfo[5, 1] + "'", "'" + tableinfo[6, 1] + "'");
+				s.AppendLine();
+
+				for (double i = 0; i < pom; i++)
+				{
+					if (j != 0)
+						p = Convert.ToDouble(j) / 125;
+					else p = 0;
+					s.AppendFormat(firstline, "'0:" + p.ToString("00.000", CultureInfo.GetCultureInfo("en-US")) + "'", signaltable[0, j].ToString(), signaltable[1, j].ToString(), signaltable[2, j].ToString(), signaltable[3, j].ToString(), signaltable[4, j].ToString(), signaltable[5, j].ToString(), signaltable[6, j].ToString());
+					s.AppendLine();
+					j++;
+				}
+			}
+
+			if (sigc == 8)
+			{
+				s.AppendFormat(firstline, "'Elapsed time'", "'" + tableinfo[0, 0] + "'", "'" + tableinfo[1, 0] + "'", "'" + tableinfo[2, 0] + "'", "'" + tableinfo[3, 0] + "'", "'" + tableinfo[4, 0] + "'", "'" + tableinfo[5, 0] + "'", "'" + tableinfo[6, 0] + "'", "'" + tableinfo[7, 0] + "'");
+				s.AppendLine();
+				s.AppendFormat(firstline, "'mm:ss.mmm'", "'" + tableinfo[0, 1] + "'", "'" + tableinfo[1, 1] + "'", "'" + tableinfo[2, 1] + "'", "'" + tableinfo[3, 1] + "'", "'" + tableinfo[4, 1] + "'", "'" + tableinfo[5, 1] + "'", "'" + tableinfo[6, 1] + "'", "'" + tableinfo[7, 1] + "'");
+				s.AppendLine();
+
+				for (double i = 0; i < pom; i++)
+				{
+					if (j != 0)
+						p = Convert.ToDouble(j) / 125;
+					else p = 0;
+					s.AppendFormat(firstline, "'0:" + p.ToString("00.000", CultureInfo.GetCultureInfo("en-US")) + "'", signaltable[0, j].ToString(), signaltable[1, j].ToString(), signaltable[2, j].ToString(), signaltable[3, j].ToString(), signaltable[4, j].ToString(), signaltable[5, j].ToString(), signaltable[6, j].ToString(), signaltable[7, j].ToString());
+					s.AppendLine();
+					j++;
+				}
+			}
+
+			if(t == 1)
+			File.WriteAllText(Directory.GetCurrentDirectory() + "/TestSignals.csv", s.ToString());
+			if(t == 2)
+			File.WriteAllText(Directory.GetCurrentDirectory() + "/Signals.txt", s.ToString());
+		}
+
+		////////////////////////////////////
+
+		private void Mimic3_Load(object sender, EventArgs e)
+		{
+
+		}
+
+		private void button9_Click(object sender, EventArgs e)
+		{
+			int t = 1;
+			StreamReader file = new StreamReader(Directory.GetCurrentDirectory().Remove(GlobalValues.pathlen - 10) + "/data/" + GlobalValues.fileName3 + ".hea");
+			string line = file.ReadLine();
+			string[] separator = { " " };
+			string[] words = line.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+			int sigcount = Convert.ToInt32(words[1]);
+			GlobalValues.sig = sigcount;
+			ConvertToXDF(UsingWrapperClasses2(sigcount), sigcount, t);
+		}
+
+		private void button8_Click(object sender, EventArgs e)
+		{
+			int t = 2;
+			StreamReader file = new StreamReader(Directory.GetCurrentDirectory().Remove(GlobalValues.pathlen - 10) + "/data/" + GlobalValues.fileName3 + ".hea");
+			string line = file.ReadLine();
+			string[] separator = { " " };
+			string[] words = line.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+			int sigcount = Convert.ToInt32(words[1]);
+			GlobalValues.sig = sigcount;
+			ConvertToXDF(UsingWrapperClasses2(sigcount), sigcount, t);
 		}
 	}
 }
