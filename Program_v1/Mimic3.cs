@@ -32,16 +32,19 @@ namespace Program_v1
 			if (GlobalValues.timeEnd < GlobalValues.samp) max = GlobalValues.timeEnd;
 			else max = GlobalValues.samp;
 
-			double a = 0, b = table[sign][0], c = table[sign][0]; ;
+			double a = 0, b = table[sign][0], c=0;
+			
+			double m = (-32768);
 			int pom = Convert.ToInt32(max - min);
 			for (int i = 0; i < pom; i++)
 			{
 				if (b > a) a = b;
-				if (b < c && b/c > 0.5 && b>(-1000)) c = b;
+				if (b < c && b!=m) c = b;
 				
 				b = table[sign][i];
 			}
 
+			Console.WriteLine(c);
 			var chart = chart1.ChartAreas[0];
 
 			chart.AxisX.IntervalType = DateTimeIntervalType.Number;
@@ -52,13 +55,17 @@ namespace Program_v1
 
 			chart1.ChartAreas[0].AxisX.ScaleView.Zoomable = true;
 			chart1.ChartAreas[0].AxisY.ScaleView.Zoomable = true;
-
 			chart.AxisX.Minimum = min;
 			chart.AxisX.Maximum = max;
 			chart.AxisY.Minimum = c;
 			chart.AxisY.Maximum = a;
-			chart.AxisX.Interval = (max - min) / 20;
-			chart.AxisY.Interval = (a - c) / 10;
+
+			if (max != 0 && min != 0)
+			chart.AxisX.Interval = (max - min) / 20; 
+			if (a != 0 || c != 0)
+			{ chart.AxisY.Interval = (a - c) / 10; }
+			else chart.AxisY.Interval = 1;
+
 			chart1.Series[0].IsVisibleInLegend = false;
 			chart1.Series.Clear();
 

@@ -194,8 +194,11 @@ namespace Program_v1
 			chart.AxisX.Maximum = max;
 			chart.AxisY.Minimum = c;
 			chart.AxisY.Maximum = a;
-			chart.AxisX.Interval = (max - min) / 20;
-			chart.AxisY.Interval = (a - c) / 10;
+			if (max != 0 && min != 0)
+				chart.AxisX.Interval = (max - min) / 20;
+			if (a != 0 && c != 0)
+			{ chart.AxisY.Interval = (a - c) / 10; }
+			else chart.AxisY.Interval = 1;
 
 			chart1.Series[0].IsVisibleInLegend = false;
 
@@ -326,8 +329,11 @@ namespace Program_v1
 			chart.AxisX.Maximum = max;
 			chart.AxisY.Minimum = c;
 			chart.AxisY.Maximum = a;
-			chart.AxisX.Interval = (max - min) / 20;
-			chart.AxisY.Interval = (a - c) / 10;
+			if (max != 0 && min != 0)
+				chart.AxisX.Interval = (max - min) / 20;
+			if (a != 0 && c != 0)
+			{ chart.AxisY.Interval = (a - c) / 10; }
+			else chart.AxisY.Interval = 1;
 
 			chart2.Series[0].IsVisibleInLegend = false;
 
